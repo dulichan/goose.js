@@ -1,0 +1,13 @@
+<%
+var goose = require('modules/goose.js').goose;
+
+var router = new goose({CONTEXT:'/api/', CACHE:true});
+router.route('users/authenticate/|POST', function(ctx){
+	if(ctx.name=='chan' && ctx.password='great'){
+		response.status=200;
+    }else{
+        response.status=401;
+        print("Authentication Failed");
+    }
+});
+%>
