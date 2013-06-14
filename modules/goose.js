@@ -1,5 +1,6 @@
 /*
 Routing mediator that enables REST-ful services
+TODO :- How to handle multipart data
 */
 var goose = (function () {
     var configs = {
@@ -45,14 +46,16 @@ var goose = (function () {
                 });
         },
 		get: function (route, action) {
-			log.info('Problem');
             this.route(route + "|GET", action);
         },	
 		post: function (route, action) {
-			log.info('Problem');
             this.route(route + "|POST", action);
 	    },
+		put: function (route, action) {
+            this.route(route + "|PUT", action);
+	    },
         process: function (request) {
+			log.info(routes);
             for (var i = 0; i < routes.length; i++) {
                 var routeObject = routes[i];
                 var routeAction = routeObject.action;
@@ -60,27 +63,32 @@ var goose = (function () {
                 var route = routeVariables[0];
                 var verb = routeVariables[1];
                 var uriMatcher = new URIMatcher(request.getRequestURI());
-                log.info(route + "   " + request.getRequestURI());
                 if (uriMatcher.match(route)) {
-                    log.info('Match');
+                    log.info('--------Goose Match--------');
                 }
-
                 if (uriMatcher.match(route) && request.getMethod() == verb) {
                     var elements = uriMatcher.elements();
                     var ctx = elements;
-                    log.info("Goose Verb -" + verb);
-                    log.info("Goose Route -" + route);
-                    if (verb != 'GET') {
-                        var jResult = request.getContent();
-                        log.info("Goose data - " + jResult);
-                        log.info('Goose String parameters -' + request.getParameter('username'));
-                        try {
-                            jResult = parse(jResult);
-                        } catch (err) {
-                            jResult = request.getAllParameters();
-                        }
-                        ctx = mergeRecursive(ctx, jResult);
-                    }
+                    log.info("--------Goose Verb --------" + verb);
+                    log.info("--------Goose Route --------" + route);
+					log.info("--------Goose Elements --------");
+					log.info(elements);
+					var jResult = {};
+					if(verb=="GET"){
+						jResult = request.getAllParameters();
+					}else{
+						jResult = request.getAllParameters();
+						if(request.getContentType()=='application/json'){
+							mergeRecursive(jResult,request.getContent());	
+						}
+					}
+					log.info("--------Goose file parsing--------- ");
+					ctx.files = request.getAllFiles();
+					log.info("--------Goose parsed data--------- ");
+					log.info(jResult);
+                    ctx = mergeRecursive(jResult,ctx);
+					log.info("--------Goose final data--------- ");
+					log.info(jResult);
                     routeAction(ctx);
                     break;
                 }
