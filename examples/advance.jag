@@ -1,0 +1,37 @@
+<%
+var goose = require('modules/goose.js').goose;
+var log = new Log();
+var router = new goose({CONTEXT:'/goose/', CACHE:false});
+router.get('users/', function(ctx){
+	log.info("recieved");
+	var users = [];
+	users[0] = {id:1, name:'Chan'};
+	print(users);
+});
+//Attributes in URL
+router.get('users/{username}', function(ctx){
+	log.info(ctx.username);
+});
+//Attributes in the POST body data
+router.post('users/register', function(ctx){
+	log.info(ctx.username);
+});
+//Get files 
+router.post('application/register', function(ctx){
+	var file = ctx.files[0];
+});
+
+router.process(request);
+
+/* TODO: By default router.process() should execute when excuted from outside
+
+*/
+// router.post('users/authenticate/', function(ctx){
+// 	if(ctx.name=='chan' && ctx.password='great'){
+// 		response.status=200;
+//     }else{
+//         response.status=401;
+//         print("Authentication Failed");
+//     }
+// });
+%>
