@@ -1,7 +1,7 @@
 <%
 var goose = require('modules/goose.js').goose;
 var log = new Log();
-var router = new goose({CONTEXT:'/goose/', CACHE:true});
+var router = new goose({CONTEXT:'/goose/', CACHE:false});
 router.get('users/', function(ctx){
 	log.info("recieved");
 	var users = [];

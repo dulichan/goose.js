@@ -1,0 +1,8 @@
+<%
+var goose = require('modules/goose.js').goose;
+var router = new goose({CONTEXT:'/goose/', CACHE:false});
+router.get('users/', function(ctx){
+	log.info("recieved");
+});
+router.process(request);
+%>
