@@ -1,5 +1,5 @@
 /*
-Routing mediator that enables REST-ful services
+Routing module will provide a way to route requests in many ways
 TODO :- How to handle multipart data
 */
 var goose = (function () {
@@ -9,12 +9,22 @@ var goose = (function () {
 		CACHE_REFRESH:false
     };
     // constructor
-	// Will be using a hash rather than an array
+	// Will be using a hash rather than an array to access routes via hash
     var routes = {};
 	var log = new Log();
+	var route = function (route, action ,verb) {
+        //contains VERB and the route
+		if(configs.CACHE){
+			if(routes[routeOverload(route+"|"+verb)]==undefined){
+				routes[routeOverload(route+"|"+verb)] = {route:routeOverload(route),verb:verb,action:action};
+				log.info("--------Goose CACHE enabled --------" + verb);
+			}
+			return;
+		}
+		routes[routeOverload(route+"|"+verb)] = {route:routeOverload(route),verb:verb,action:action};
+    };
     var module = function (conf) {
         mergeRecursive(configs, conf);
-        log.info("Goose Context- " + configs.CONTEXT);
 		if(configs.CACHE){
 			var r = application.get("jaggery.goose.routes");
 			if(r==undefined){
@@ -25,6 +35,8 @@ var goose = (function () {
 			route("cacherefresh",function(ctx){
 				application.put("jaggery.goose.routes", undefined);
 			}, "GET");
+		}else{
+			application.put("jaggery.goose.routes", undefined);
 		}
     };
 
@@ -52,18 +64,7 @@ var goose = (function () {
     // prototype
     module.prototype = {
         constructor: module,
-        route: function (route, action ,verb) {
-            //contains VERB and the route
-			if(configs.CACHE){
-				if(routes[routeOverload(route+"|"+verb)]==undefined){
-					routes[routeOverload(route+"|"+verb)] = {route:routeOverload(route),verb:verb,action:action};
-					log.info("--------Goose CACHE enabled --------" + verb);
-				}
-				return;
-			}
-			log.info("sdfsd");
-			routes[routeOverload(route+"|"+verb)] = {route:route,verb:verb,action:action};
-        },
+        route: route,
 		get: function (route, action) {
             this.route(route, action, "GET");
         },	
@@ -74,6 +75,7 @@ var goose = (function () {
             this.route(route, action, "PUT");
 	    },
         process: function (request) {
+			var matched = false;
 			for (var property in routes){
 				if(routes.hasOwnProperty(property)){
 					var routeObject = routes[property];
@@ -113,13 +115,14 @@ var goose = (function () {
 						log.info("--------Goose final data--------- ");
 						log.info(jResult);
 	                    routeAction(ctx);
+						matched = true;
 	                    break;
 	                }
 				}
 			}
-            for (var i = 0; i < routes.length; i++) {
-                
-            }
+			if(!matched){
+				response.sendError(404);
+			}
         }
     };
     // return module
