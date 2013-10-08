@@ -9,4 +9,7 @@ An example would be
 	});
 ```
 
+## Authorization levels and authentication support
+Goose supports authorization via routes object. Check the examples folder for usage. 
+
 Notes:- Name Goose refers to the inspiration of the module.
