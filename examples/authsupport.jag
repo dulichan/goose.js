@@ -1,0 +1,15 @@
+<%
+var log = new Log();
+//Assume below user is a (Fully blown user) server object
+var user = {
+	roles: ['everyone']
+};
+log.debug("inside");
+var goose = require('/modules/goose.js').goose;
+var router = new goose({CONTEXT:'/goose/', CACHE:false, AUTH_SUPPORT: true, AUTH_USER_ROLES:user.roles});
+
+router.get('users/', function(ctx){
+	log.debug("recieved");
+}, ['everyone']);
+router.process(request);
+%>

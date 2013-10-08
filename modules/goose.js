@@ -1,27 +1,32 @@
 /*
 Routing module will provide a way to route requests in many ways
-TODO :- How to handle multipart data
 */
 var goose = (function () {
     var configs = {
         CONTEXT: "/",
 		CACHE:false,
-		CACHE_REFRESH:false
+		CACHE_REFRESH:false,
+		//Auth support parameter
+		AUTH_SUPPORT:false,
+		/*
+			Authenticated user's roles are stored in the below config
+		*/
+		AUTH_USER_ROLES:undefined
     };
     // constructor
 	// Will be using a hash rather than an array to access routes via hash
     var routes = {};
 	var log = new Log();
-	var route = function (route, action ,verb) {
+	var route = function (route, action, verb, roles) {
         //contains VERB and the route
 		if(configs.CACHE){
 			if(routes[routeOverload(route+"|"+verb)]==undefined){
-				routes[routeOverload(route+"|"+verb)] = {route:routeOverload(route),verb:verb,action:action};
+				routes[routeOverload(route+"|"+verb)] = {route:routeOverload(route), verb:verb, action:action, roles:roles};
 				log.info("--------Goose CACHE enabled --------" + verb);
 			}
 			return;
 		}
-		routes[routeOverload(route+"|"+verb)] = {route:routeOverload(route),verb:verb,action:action};
+		routes[routeOverload(route+"|"+verb)] = {route:routeOverload(route),verb:verb,action:action, roles:roles};
     };
     var module = function (conf) {
         mergeRecursive(configs, conf);
@@ -39,7 +44,18 @@ var goose = (function () {
 			application.put("jaggery.goose.routes", undefined);
 		}
     };
-
+	function isArrayOverlap(array1, array2){
+		for (var i = array1.length - 1; i >= 0; i--){
+			var array1Element = array1[i];
+			for (var j = array2.length - 1; j >= 0; j--){
+				var array2Element = array2[j];
+				if(array1Element==array2Element){
+					return true;
+				}
+			};
+		};
+		return false;
+	}
     function routeOverload(route) {
         return configs.CONTEXT + route;
     }
@@ -65,8 +81,8 @@ var goose = (function () {
     module.prototype = {
         constructor: module,
         route: route,
-		get: function (route, action) {
-            this.route(route, action, "GET");
+		get: function (route, action, roles) {
+            this.route(route, action, "GET" , roles);
         },	
 		post: function (route, action) {
             this.route(route, action, "POST");
@@ -74,46 +90,62 @@ var goose = (function () {
 		put: function (route, action) {
             this.route(route, action, "PUT");
 	    },
-        process: function (request) {
+		delete : function(route, action){
+			this.route(route, action, "DELETE");
+		},
+		process: function (request) {
 			var matched = false;
 			for (var property in routes){
 				if(routes.hasOwnProperty(property)){
 					var routeObject = routes[property];
-					log.info(routeObject);
+					log.debug("Goose Router Object"+stringify(routeObject));
 	                var routeAction = routeObject.action;
 	                var route = routeObject.route;
 	                var verb = routeObject.verb;
 	                var uriMatcher = new URIMatcher(request.getRequestURI());
-					log.info(request.getRequestURI());
-	                if (uriMatcher.match(route)) {
-	                    log.info('--------Goose Match--------');
-	                }
+					log.debug('--------Request URI--------'+request.getRequestURI());
 	                if (uriMatcher.match(route) && request.getMethod() == verb) {
-	                    var elements = uriMatcher.elements();
+						log.debug('--------Goose Match--------');
+						if(configs.AUTH_SUPPORT){
+							if(configs.AUTH_USER_ROLES==undefined){
+								 log.debug("--------Goose Auth Error (User roles not found)--------");
+								 response.sendError(403);
+								 return;
+							}
+							
+							var authState = isArrayOverlap(configs.AUTH_USER_ROLES, routeObject.roles);
+							if(!authState){
+								 log.debug("--------Goose Auth Error (User roles doesn't match with route roles)--------");
+								 response.sendError(403);
+								 return;
+							}
+						}
+	                    
+						var elements = uriMatcher.elements();
 	                    var ctx = elements;
-	                    log.info("--------Goose Verb --------" + verb);
-	                    log.info("--------Goose Route --------" + route);
-						log.info("--------Goose Elements --------");
-						log.info(elements);
+	                    log.debug("--------Goose Verb --------" + verb);
+	                    log.debug("--------Goose Route --------" + route);
+						log.debug("--------Goose Elements --------");
+						log.debug(elements);
 						
 						var jResult = {};
 						if(verb=="GET"){
 							jResult = request.getAllParameters('UTF-8');
 						}else{
 							jResult = request.getAllParameters('UTF-8');
-							if(request.getContentType()=='application/json'){
-								mergeRecursive(jResult,request.getContent());	
+							log.debug("--------Goose ContentType --------"+request.getContentType());
+							if(request.getContentType().indexOf('application/json') !== -1){
+								mergeRecursive(jResult,request.getContent());
 							}
 						}
-						log.info("--------Goose file parsing--------- ");
 						ctx.files = request.getAllFiles();
 						
-						log.info("--------Goose parsed data--------- ");
-						log.info(jResult);
+						log.debug("--------Goose parsed data--------- ");
+						log.debug(jResult);
 	                    ctx = mergeRecursive(jResult,ctx);
 	
-						log.info("--------Goose final data--------- ");
-						log.info(jResult);
+						log.debug("--------Goose final data--------- ");
+						log.debug(jResult);
 	                    routeAction(ctx);
 						matched = true;
 	                    break;
@@ -124,6 +156,7 @@ var goose = (function () {
 				response.sendError(404);
 			}
         }
+        
     };
     // return module
     return module;

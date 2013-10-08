@@ -1,7 +1,7 @@
 <%
 var goose = require('modules/goose.js').goose;
 var log = new Log();
-var router = new goose({CONTEXT:'/goose/', CACHE:false});
+var router = new goose({CONTEXT:'/api/', CACHE:false});
 router.get('users/', function(ctx){
 	log.info("recieved");
 	var users = [];
@@ -35,3 +35,5 @@ router.process(request);
 //     }
 // });
 %>
+
+// Use a variable scheme, get the request 
