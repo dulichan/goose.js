@@ -1,5 +1,5 @@
 {
-	'/goose/users/':{
+	'/goose/users/advance':{
 		'GET': ['everyone']
 	}
 }

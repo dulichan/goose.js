@@ -98,7 +98,12 @@ var goose = (function () {
 				if(routes.hasOwnProperty(property)){
 					var routeObject = routes[property];
 					log.debug('--------Goose Rule setup current route --------'+routeObject.route);
-					routeObject.roles = jsonFile[routeObject.route][routeObject.verb]; 
+					var r = jsonFile[routeObject.route];
+					if(r==undefined){
+						log.debug('--------Goose No Rule specified for route --------'+routeObject.route);
+						continue;
+					}
+					routeObject.roles = r[routeObject.verb]; 
 					log.debug('--------Goose Rule setup authorized roles for route --------'+routeObject.roles);
 				}
 			}
@@ -122,12 +127,17 @@ var goose = (function () {
 								 response.sendError(403);
 								 return;
 							}
-							
-							var authState = isArrayOverlap(configs.AUTH_USER_ROLES, routeObject.roles);
-							if(!authState){
-								 log.debug("--------Goose Auth Error (User roles doesn't match with route roles)--------");
-								 response.sendError(403);
-								 return;
+							if(routeObject.roles!=undefined){
+								log.debug('--------Goose Route roles--------'+routeObject.roles);
+								log.debug('--------Goose User roles--------'+configs.AUTH_USER_ROLES);
+								var authState = isArrayOverlap(configs.AUTH_USER_ROLES, routeObject.roles);
+								if(!authState){
+									 log.debug("--------Goose Auth Error (User roles doesn't match with route roles)--------");
+									 response.sendError(403);
+									 return;
+								}
+							}else{
+								log.debug("--------Goose Auth No Rules found for route--------");
 							}
 						}
 	                    
