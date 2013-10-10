@@ -103,7 +103,12 @@ var goose = (function () {
 						log.debug('--------Goose No Rule specified for route --------'+routeObject.route);
 						continue;
 					}
-					routeObject.roles = r[routeObject.verb]; 
+					r = r[routeObject.verb];
+					if(r==undefined){
+						log.debug('--------Goose No Rule specified for route method --------'+routeObject.verb);
+						continue;
+					}
+					routeObject.roles = r; 
 					log.debug('--------Goose Rule setup authorized roles for route --------'+routeObject.roles);
 				}
 			}
@@ -122,12 +127,12 @@ var goose = (function () {
 	                if (uriMatcher.match(route) && request.getMethod() == verb) {
 						log.debug('--------Goose Match--------');
 						if(configs.AUTH_SUPPORT){
-							if(configs.AUTH_USER_ROLES==undefined){
-								 log.debug("--------Goose Auth Error (User roles not found)--------");
-								 response.sendError(403);
-								 return;
-							}
 							if(routeObject.roles!=undefined){
+								if(configs.AUTH_USER_ROLES==undefined){
+									 log.debug("--------Goose Auth Error (User roles not found)--------");
+									 response.sendError(403);
+									 return;
+								}
 								log.debug('--------Goose Route roles--------'+routeObject.roles);
 								log.debug('--------Goose User roles--------'+configs.AUTH_USER_ROLES);
 								var authState = isArrayOverlap(configs.AUTH_USER_ROLES, routeObject.roles);

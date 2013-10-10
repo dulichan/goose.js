@@ -14,6 +14,9 @@ router.get('users/', function(ctx){
 router.get('users/advance', function(ctx){
 	log.debug("advance recieved");
 });
+router.get('users/bb', function(ctx){
+	log.debug("normal recieved");
+});
 router.setupRules(require('/config/route.json'));
 router.process(request);
 %>
