@@ -93,6 +93,16 @@ var goose = (function () {
 		delete : function(route, action){
 			this.route(route, action, "DELETE");
 		},
+		setupRules: function(jsonFile){
+			for (var property in routes){
+				if(routes.hasOwnProperty(property)){
+					var routeObject = routes[property];
+					log.debug('--------Goose Rule setup current route --------'+routeObject.route);
+					routeObject.roles = jsonFile[routeObject.route][routeObject.verb]; 
+					log.debug('--------Goose Rule setup authorized roles for route --------'+routeObject.roles);
+				}
+			}
+		},
 		process: function (request) {
 			var matched = false;
 			for (var property in routes){

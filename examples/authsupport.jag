@@ -10,6 +10,7 @@ var router = new goose({CONTEXT:'/goose/', CACHE:false, AUTH_SUPPORT: true, AUTH
 
 router.get('users/', function(ctx){
 	log.debug("recieved");
-}, ['everyone']);
+});
+router.setupRules(require('/config/route.json'));
 router.process(request);
 %>
